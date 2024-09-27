@@ -32,12 +32,12 @@ def plot_interpolation_error(n_values, x_range):
     for n in n_values:
 
         x_nodes = np.linspace(x_range[0], x_range[1], n)
-        y_nodes = cos(x_nodes)
+        y_nodes = J0(x_nodes)
         P_n = lagrange_interpolation(x_nodes, y_nodes, x_values)
 
-        error = P_n - cos(x_values)
+        error = P_n - J0(x_values)
         plt.plot(x_values, error, label=f'n = {n}')
-        print(f"{n} - {error}")
+        #print(f"{n} - {error}")
 
     plt.title("Interpolation error P_n(x) - J_0(x)")
     plt.xlabel("x")
