@@ -1,65 +1,123 @@
 import numpy as np
 import matplotlib.pyplot as plt
-#что такое жесктая схема и почему не сходится задача
-def f(u, v):
-    return 998 * u + 1998 * v, -999 * u - 1999 * v
+from scipy.linalg import solve
 
-def explicit_euler(u0, v0, t_end, h):
-    steps = int(t_end / h) + 1
-    u_values = np.zeros(steps)
-    v_values = np.zeros(steps)
+def f_explicit(t, u, v):
+    """Функция для вычисления производных u и v."""
+    du = 998 * u + 1998 * v
+    dv = -999 * u - 1999 * v
+    return du, dv
+
+def explicit_euler(f, t0, u0, v0, t_end, h):
+    """Явная схема Эйлера."""
+    t_values = np.arange(t0, t_end + h, h)
+    u_values = np.zeros_like(t_values)
+    v_values = np.zeros_like(t_values)
+
     u_values[0], v_values[0] = u0, v0
 
-    for n in range(steps - 1):
-        u_values[n + 1] = u_values[n] + h * f(u_values[n], v_values[n])[0]
-        v_values[n + 1] = v_values[n] + h * f(u_values[n], v_values[n])[1]
+    for i in range(1, len(t_values)):
+        du, dv = f(t_values[i - 1], u_values[i - 1], v_values[i - 1])
+        u_values[i] = u_values[i - 1] + h * du
+        v_values[i] = v_values[i - 1] + h * dv
 
-    return u_values, v_values
+    return t_values, u_values, v_values
 
-def implicit_euler(u0, v0, t_end, h):
-    steps = int(t_end / h) + 1
-    u_values = np.zeros(steps)
-    v_values = np.zeros(steps)
+def trapezoidal_rule(f, t0, u0, v0, t_end, h):
+    """Полунеявная схема трапеций."""
+    t_values = np.arange(t0, t_end + h, h)
+    u_values = np.zeros_like(t_values)
+    v_values = np.zeros_like(t_values)
+
     u_values[0], v_values[0] = u0, v0
 
-    for n in range(steps - 1):
-        u_next = u_values[n] / (1 - h * 998) + h * v_values[n] / (1 - h * 1998)
-        v_next = -u_values[n] / (1 - h * 999) - v_values[n] / (1 - h * 1999)
-        u_values[n + 1] = u_next
-        v_values[n + 1] = v_next
+    for i in range(1, len(t_values)):
+        du_old, dv_old = f(t_values[i - 1], u_values[i - 1], v_values[i - 1])
+        u_guess = u_values[i - 1] + h * du_old
+        v_guess = v_values[i - 1] + h * dv_old
 
-    return u_values, v_values
+        du_new, dv_new = f(t_values[i], u_guess, v_guess)
+        u_values[i] = u_values[i - 1] + h / 2 * (du_old + du_new)
+        v_values[i] = v_values[i - 1] + h / 2 * (dv_old + dv_new)
 
-def runge_kutta(u0, v0, t_end, h):
-    steps = int(t_end / h) + 1
-    u_values = np.zeros(steps)
-    v_values = np.zeros(steps)
+    return t_values, u_values, v_values
+
+def implicit_euler(f, t0, u0, v0, t_end, h):
+    """Неявная схема Эйлера."""
+    t_values = np.arange(t0, t_end + h, h)
+    u_values = np.zeros_like(t_values)
+    v_values = np.zeros_like(t_values)
+
     u_values[0], v_values[0] = u0, v0
 
-    for n in range(steps - 1):
-        k1u, k1v = f(u_values[n], v_values[n])
-        k2u, k2v = f(u_values[n] + h * k1u, v_values[n] + h * k1v)
-        u_values[n + 1] = u_values[n] + (h / 2) * (k1u + k2u)
-        v_values[n + 1] = v_values[n] + (h / 2) * (k1v + k2v)
+    A = np.array([[1 - h * 998, -h * 1998],
+                  [h * 999, 1 + h * 1999]])
 
-    return u_values, v_values
+    for i in range(1, len(t_values)):
+        u_old, v_old = u_values[i - 1], v_values[i - 1]
+        b = np.array([u_old, v_old])
+        u_new, v_new = solve(A, b)
+        u_values[i], v_values[i] = u_new, v_new
 
-u0 = 1.0
-v0 = 1.0
-t_end = 0.01
-h = 0.0001
+    return t_values, u_values, v_values
 
-u_explicit, v_explicit = explicit_euler(u0, v0, t_end, h)
-u_implicit, v_implicit = implicit_euler(u0, v0, t_end, h)
-u_rk, v_rk = runge_kutta(u0, v0, t_end, h)
+t0 = 0
+u0 = 1
+v0 = 0
+t_end = 0.05
+h = 0.001
 
-plt.figure(figsize=(12, 8))
-plt.plot(u_explicit, v_explicit, label='Явный метод Эйлера', color='red')
-plt.plot(u_implicit, v_implicit, label='Неявный метод Эйлера', color='green')
-plt.plot(u_rk, v_rk, label='Метод Рунге-Кутты 2-го порядка', color='blue')
-plt.title('Сравнение решений жесткой системы уравнений')
-plt.xlabel('u')
-plt.ylabel('v')
-plt.legend()
-plt.grid()
-plt.show()
+t_explicit, u_explicit, v_explicit = explicit_euler(f_explicit, t0, u0, v0, t_end, h)
+t_trap, u_trap, v_trap = trapezoidal_rule(f_explicit, t0, u0, v0, t_end, h)
+t_implicit, u_implicit, v_implicit = implicit_euler(f_explicit, t0, u0, v0, t_end, h)
+
+def plot_phase_trajectories(u_values_list, v_values_list, labels):
+    plt.figure(figsize=(10, 6))
+    for u_values, v_values, label in zip(u_values_list, v_values_list, labels):
+        plt.plot(u_values, v_values, label=label)
+    plt.xlabel('u')
+    plt.ylabel('v')
+    plt.title('Фазовые траектории')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+plot_phase_trajectories(
+    [u_explicit, u_trap, u_implicit],
+    [v_explicit, v_trap, v_implicit],
+    ['Явная схема Эйлера', 'Полунеявная схема трапеций', 'Неявная схема Эйлера']
+)
+
+def plot_time_series(t_values_list, u_values_list, v_values_list, labels):
+    plt.figure(figsize=(10, 6))
+    for t_values, u_values, v_values, label in zip(t_values_list, u_values_list, v_values_list, labels):
+        plt.plot(t_values, u_values, label=f'u ({label})', linestyle='--')
+        plt.plot(t_values, v_values, label=f'v ({label})', linestyle='--')
+    plt.xlabel('t')
+    plt.ylabel('u, v')
+    plt.title('Численное решение')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+plot_time_series(
+    [t_explicit, t_trap, t_implicit],
+    [u_explicit, u_trap, u_implicit],
+    [v_explicit, v_trap, v_implicit],
+    ['Явная схема', 'Полунеявная схема', 'Неявная схема']
+)
+
+
+step_sizes = [0.001, 0.005, 0.01, 0.06, 0.1]
+
+for h in step_sizes:
+    t_explicit, u_explicit, v_explicit = explicit_euler(f_explicit, t0, u0, v0, t_end, h)
+    t_trap, u_trap, v_trap = trapezoidal_rule(f_explicit, t0, u0, v0, t_end, h)
+    t_implicit, u_implicit, v_implicit = implicit_euler(f_explicit, t0, u0, v0, t_end, h)
+
+    plot_phase_trajectories(
+        [u_explicit, u_trap, u_implicit],
+        [v_explicit, v_trap, v_implicit],
+        [f'Явная схема Эйлера, h={h}', f'Полунеявная схема, h={h}', f'Неявная схема Эйлера, h={h}']
+    )
