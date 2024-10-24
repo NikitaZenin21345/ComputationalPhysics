@@ -67,9 +67,9 @@ v0 = 0
 t_end = 0.05
 h = 0.001
 
-t_explicit, u_explicit, v_explicit = explicit_euler(f_explicit, t0, u0, v0, t_end, h)
-t_trap, u_trap, v_trap = trapezoidal_rule(f_explicit, t0, u0, v0, t_end, h)
-t_implicit, u_implicit, v_implicit = implicit_euler(f_explicit, t0, u0, v0, t_end, h)
+t, u_explicit, v_explicit = explicit_euler(f_explicit, t0, u0, v0, t_end, h)
+_, u_trap, v_trap = trapezoidal_rule(f_explicit, t0, u0, v0, t_end, h)
+_, u_implicit, v_implicit = implicit_euler(f_explicit, t0, u0, v0, t_end, h)
 
 def plot_phase_trajectories(u_values_list, v_values_list, labels):
     plt.figure(figsize=(10, 6))
@@ -102,7 +102,7 @@ def plot_time_series(t_values_list, u_values_list, v_values_list, labels):
     plt.show()
 
 plot_time_series(
-    [t_explicit, t_trap, t_implicit],
+    [t, t, t],
     [u_explicit, u_trap, u_implicit],
     [v_explicit, v_trap, v_implicit],
     ['Явная схема', 'Полунеявная схема', 'Неявная схема']
