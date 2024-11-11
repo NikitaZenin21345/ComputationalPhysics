@@ -24,7 +24,7 @@ def explicit_euler(f, t0, u0, v0, t_end, h):
     return t_values, u_values, v_values
 
 def trapezoidal_rule(f, t0, u0, v0, t_end, h):
-    """Полунеявная схема трапеций."""
+    """схема трапеций."""
     t_values = np.arange(t0, t_end + h, h)
     u_values = np.zeros_like(t_values)
     v_values = np.zeros_like(t_values)
@@ -67,9 +67,9 @@ v0 = 0
 t_end = 0.05
 h = 0.001
 
-t, u_explicit, v_explicit = explicit_euler(f_explicit, t0, u0, v0, t_end, h)
-_, u_trap, v_trap = trapezoidal_rule(f_explicit, t0, u0, v0, t_end, h)
-_, u_implicit, v_implicit = implicit_euler(f_explicit, t0, u0, v0, t_end, h)
+# t, u_explicit, v_explicit = explicit_euler(f_explicit, t0, u0, v0, t_end, h)
+# _, u_trap, v_trap = trapezoidal_rule(f_explicit, t0, u0, v0, t_end, h)
+# _, u_implicit, v_implicit = implicit_euler(f_explicit, t0, u0, v0, t_end, h)
 
 def plot_phase_trajectories(u_values_list, v_values_list, labels):
     plt.figure(figsize=(10, 6))
@@ -83,41 +83,44 @@ def plot_phase_trajectories(u_values_list, v_values_list, labels):
     plt.show()
 
 
-plot_phase_trajectories(
-    [u_explicit, u_trap, u_implicit],
-    [v_explicit, v_trap, v_implicit],
-    ['Явная схема Эйлера', 'Полунеявная схема трапеций', 'Неявная схема Эйлера']
-)
+# plot_phase_trajectories(
+#     [u_explicit, u_trap, u_implicit],
+#     [v_explicit, v_trap, v_implicit],
+#     ['Явная схема Эйлера', 'Полунеявная схема трапеций', 'Неявная схема Эйлера']
+# )
 
 def plot_time_series(t_values_list, u_values_list, v_values_list, labels):
     plt.figure(figsize=(10, 6))
     for t_values, u_values, v_values, label in zip(t_values_list, u_values_list, v_values_list, labels):
         plt.plot(t_values, u_values, label=f'u ({label})', linestyle='--')
+        plt.xlabel('t')
+        plt.ylabel('u, v')
+        plt.title('Численное решение')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
         plt.plot(t_values, v_values, label=f'v ({label})', linestyle='--')
-    plt.xlabel('t')
-    plt.ylabel('u, v')
-    plt.title('Численное решение')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+        plt.xlabel('t')
+        plt.ylabel('u, v')
+        plt.title('Численное решение')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
 
-plot_time_series(
-    [t, t, t],
-    [u_explicit, u_trap, u_implicit],
-    [v_explicit, v_trap, v_implicit],
-    ['Явная схема', 'Полунеявная схема', 'Неявная схема']
-)
+
+
 
 
 step_sizes = [0.001, 0.005, 0.01, 0.06, 0.1]
-
+# нарисовать для разных шагов по времени
 for h in step_sizes:
-    t_explicit, u_explicit, v_explicit = explicit_euler(f_explicit, t0, u0, v0, t_end, h)
-    t_trap, u_trap, v_trap = trapezoidal_rule(f_explicit, t0, u0, v0, t_end, h)
-    t_implicit, u_implicit, v_implicit = implicit_euler(f_explicit, t0, u0, v0, t_end, h)
+    t, u_explicit, v_explicit = explicit_euler(f_explicit, t0, u0, v0, t_end, h)
+    _, u_trap, v_trap = trapezoidal_rule(f_explicit, t0, u0, v0, t_end, h)
+    _, u_implicit, v_implicit = implicit_euler(f_explicit, t0, u0, v0, t_end, h)
 
-    plot_phase_trajectories(
+    plot_time_series(
+        [t, t, t],
         [u_explicit, u_trap, u_implicit],
         [v_explicit, v_trap, v_implicit],
-        [f'Явная схема Эйлера, h={h}', f'Полунеявная схема, h={h}', f'Неявная схема Эйлера, h={h}']
+        [f'Явная схема {h}', f'Полунеявная схема {h}', f'Неявная схема {h}']
     )

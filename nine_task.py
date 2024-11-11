@@ -47,9 +47,8 @@ def progonka(A, B):
 
 
 y = progonka(A, B)
-
+#порядок сходимости
 plt.plot(x, y, label='Численное решение')
-plt.plot(x, linestyle='dashed')
 plt.legend()
 plt.xlabel('x')
 plt.ylabel('y')
