@@ -3,106 +3,88 @@ import matplotlib.pyplot as plt
 
 L = 1.0
 T = 0.1
-alpha = 1.0
+nx = 50
+nt = 1000
+dx = L / (nx - 1)
+dt = T / nt
+alpha = dt / dx**2
 
-Nx = 50
-dx = L / Nx
-x = np.linspace(0, L, Nx + 1)
+if alpha > 0.5:
+    print("решение может быть неустойчивым")
 
-dt_values = [0.1, 0.05, 0.025, 0.0125, 0.01, 0.005]
-errors_dt = []
+x = np.linspace(0, L, nx)
+t = np.linspace(0, T, nt)
 
-for dt in dt_values:
-    Nt = int(T / dt)
-    t = np.linspace(0, T, Nt + 1)
+u = np.sin(np.pi * x / L)
+u_analytical = np.zeros_like(u)
 
-    sigma = alpha * dt / dx ** 2
+A = np.zeros((nx-2, nx-2))
+B = np.zeros((nx-2, nx-2))
 
-    u = np.zeros((Nt + 1, Nx + 1))
-    u[0, :] = np.sin(np.pi * x)
+for i in range(nx-2):
+    for j in range(nx-2):
+        if i == j:
+            A[i,j] = 1 + alpha
+            B[i,j] = 1 - alpha
+        elif abs(i - j) == 1:
+            A[i,j] = -alpha / 2
+            B[i,j] = alpha / 2
 
-    u[:, 0] = 0
-    u[:, -1] = 0
+u_num = u.copy()
 
-    A = np.zeros((Nx - 1, Nx - 1))
-    B = np.zeros((Nx - 1, Nx - 1))
+for n in range(nt):
+    b = B.dot(u_num[1:-1])
+    u_new = np.linalg.solve(A, b)
+    u_num[1:-1] = u_new
 
-    for i in range(Nx - 1):
-        if i > 0:
-            A[i, i - 1] = -sigma / 2
-            B[i, i - 1] = sigma / 2
-        A[i, i] = 1 + sigma
-        B[i, i] = 1 - sigma
-        if i < Nx - 2:
-            A[i, i + 1] = -sigma / 2
-            B[i, i + 1] = sigma / 2
+u_analytical = np.sin(np.pi * x / L) * np.exp(- (np.pi / L)**2 * T)
 
-    for n in range(0, Nt):
-        b = B @ u[n, 1:-1]
-        u[n + 1, 1:-1] = np.linalg.solve(A, b)
-
-    u_exact = np.zeros((Nt + 1, Nx + 1))
-    for n in range(Nt + 1):
-        u_exact[n, :] = np.sin(np.pi * x) * np.exp(-np.pi ** 2 * t[n])
-
-    errors_dt.append(np.max(np.abs(u[-1, :] - u_exact[-1, :])))
-
-plt.figure(figsize=(10, 6))
-plt.loglog(dt_values, errors_dt, 'o-', label='Ошибка по dt')
-plt.xlabel('Шаг по времени dt')
-plt.ylabel('Максимальная ошибка')
-plt.title('Сходимость по времени (dt)')
-plt.grid(True)
+plt.figure(figsize=(8,6))
+plt.plot(x, u_num, label='Численное решение (Кранк-Николсон)')
+plt.plot(x, u_analytical, '--', label='Аналитическое решение')
+plt.xlabel('x')
+plt.ylabel('u(x, T)')
 plt.legend()
+plt.title('Сравнение')
+plt.grid(True)
 plt.show()
 
-dt = 0.001
-Nx_values = [20, 40, 80, 160]
-errors_dx = []
+errors = []
+dx_values = []
+nx_values = [10, 20, 40, 80, 160]
+for nx in nx_values:
+    dx = L / (nx - 1)
+    dt = alpha * dx**2
+    nt = int(T / dt)
+    x = np.linspace(0, L, nx)
+    u = np.sin(np.pi * x / L)
+    u_num = u.copy()
 
-for Nx in Nx_values:
-    dx = L / Nx
-    x = np.linspace(0, L, Nx + 1)
+    A = np.zeros((nx-2, nx-2))
+    B = np.zeros((nx-2, nx-2))
+    for i in range(nx-2):
+        for j in range(nx-2):
+            if i == j:
+                A[i,j] = 1 + alpha
+                B[i,j] = 1 - alpha
+            elif abs(i - j) == 1:
+                A[i,j] = -alpha / 2
+                B[i,j] = alpha / 2
 
-    sigma = alpha * dt / dx ** 2
-    Nt = int(T / dt)
-    t = np.linspace(0, T, Nt + 1)
+    for n in range(nt):
+        b = B.dot(u_num[1:-1])
+        u_new = np.linalg.solve(A, b)
+        u_num[1:-1] = u_new
 
-    u = np.zeros((Nt + 1, Nx + 1))
-    u[0, :] = np.sin(np.pi * x)
+    u_analytical = np.sin(np.pi * x / L) * np.exp(- (np.pi / L)**2 * T)
+    error = np.max(np.abs(u_num - u_analytical))
+    errors.append(error)
+    dx_values.append(dx)
 
-    u[:, 0] = 0
-    u[:, -1] = 0
-
-    A = np.zeros((Nx - 1, Nx - 1))
-    B = np.zeros((Nx - 1, Nx - 1))
-
-    for i in range(Nx - 1):
-        if i > 0:
-            A[i, i - 1] = -sigma / 2
-            B[i, i - 1] = sigma / 2
-        A[i, i] = 1 + sigma
-        B[i, i] = 1 - sigma
-        if i < Nx - 2:
-            A[i, i + 1] = -sigma / 2
-            B[i, i + 1] = sigma / 2
-
-    for n in range(0, Nt):
-        b = B @ u[n, 1:-1]
-        u[n + 1, 1:-1] = np.linalg.solve(A, b)
-
-    u_exact = np.zeros((Nt + 1, Nx + 1))
-    for n in range(Nt + 1):
-        u_exact[n, :] = np.sin(np.pi * x) * np.exp(-np.pi ** 2 * t[n])
-
-    errors_dx.append(np.max(np.abs(u[-1, :] - u_exact[-1, :])))
-
-h_values = [L / Nx for Nx in Nx_values]
-plt.figure(figsize=(10, 6))
-plt.loglog(h_values, errors_dx, 'o-', label='Ошибка по dx')
-plt.xlabel('Шаг по пространству dx')
+plt.figure(figsize=(8,6))
+plt.loglog(dx_values, errors, '-o')
+plt.xlabel('dx')
 plt.ylabel('Максимальная ошибка')
-plt.title('Сходимость по пространству (dx)')
+plt.title('Сходимость схемы')
 plt.grid(True)
-plt.legend()
 plt.show()
