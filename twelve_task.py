@@ -1,6 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def DFT_slow(x):
+    x = np.asarray(x, dtype=float)
+    N = x.shape[0]
+    n = np.arange(N)
+    k = n.reshape((N, 1))
+    M = np.exp(-2j * np.pi * k * n / N)
+    return np.dot(M, x)
+
+
 a0 = 1
 a1 = 0.002
 omega0 = 5.1
@@ -19,12 +28,12 @@ f_rect = f * window_rect
 window_hann = np.hanning(N)
 f_hann = f * window_hann
 
-F_rect = np.fft.fft(f_rect)
+F_rect = DFT_slow(f_rect)
 F_rect_shifted = np.fft.fftshift(F_rect)
 power_spectrum_rect = np.abs(F_rect_shifted) ** 2
 power_spectrum_rect /= np.max(power_spectrum_rect)
 
-F_hann = np.fft.fft(f_hann)
+F_hann = DFT_slow(f_hann)
 F_hann_shifted = np.fft.fftshift(F_hann)
 power_spectrum_hann = np.abs(F_hann_shifted) ** 2
 power_spectrum_hann /= np.max(power_spectrum_hann)
