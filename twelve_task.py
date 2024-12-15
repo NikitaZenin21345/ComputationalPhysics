@@ -32,7 +32,7 @@ rect_window = np.ones(N)
 
 hanning_window = windows.hann(N)
 
-spectrum_rect = DFT_slow(f_t)
+spectrum_rect = DFT_slow(f_t * rect_window)
 frequencies = get_freq_array(N, 1 / N)
 
 spectrum_hanning = DFT_slow(f_t * hanning_window)
